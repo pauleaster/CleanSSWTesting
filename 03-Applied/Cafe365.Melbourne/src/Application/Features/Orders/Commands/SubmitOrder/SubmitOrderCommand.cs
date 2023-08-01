@@ -20,13 +20,11 @@ public class SubmitOrderCommandHandler : IRequestHandler<SubmitOrderCommand, Gui
     private readonly IApplicationDbContext _dbContext;
 
     private readonly IPaymentProvider _paymentProvider;
-    private readonly IEmailProvider _emailProvider;
 
-    public SubmitOrderCommandHandler(IApplicationDbContext dbContext, IPaymentProvider paymentProvider, IEmailProvider emailProvider)
+    public SubmitOrderCommandHandler(IApplicationDbContext dbContext, IPaymentProvider paymentProvider)
     {
         _dbContext = dbContext;
         _paymentProvider = paymentProvider;
-        _emailProvider = emailProvider;
     }
 
     public async Task<Guid> Handle(SubmitOrderCommand request, CancellationToken cancellationToken)
@@ -37,19 +35,14 @@ public class SubmitOrderCommandHandler : IRequestHandler<SubmitOrderCommand, Gui
             .Include(o => o.Items)
             .First(o => o.Id == orderId);
 
-        var customer = _dbContext.Customers.FirstOrDefault(c => c.Id == order.CustomerId);
-        if (customer == null)
-            throw new ValidationException("Could not find customer");
-
         await ProcessPayment(request, order);
         await AdjustStock(order, cancellationToken);
 
         order.OrderStatus = OrderStatus.Complete;
 
-        await _dbContext.SaveChangesAsync(cancellationToken);
+        order.AddDomainEvent(new OrderSubmittedEvent(order));
 
-        // Send confirmation email
-        await _emailProvider.SendConfirmationEmail(customer.Email, customer.FirstName, order);
+        await _dbContext.SaveChangesAsync(cancellationToken);
 
         return order.Id.Value;
     }
