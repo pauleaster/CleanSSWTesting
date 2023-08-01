@@ -2,6 +2,12 @@
 using Microsoft.Extensions.Logging;
 using FluentValidation.Validators;
 using Cafe365.Melbourne.Domain.TodoItems;
+using Bogus;
+using Cafe365.Melbourne.Domain.Common.ValueObjects;
+using Cafe365.Melbourne.Domain.Products;
+using Cafe365.Melbourne.Domain.Orders;
+using Bogus.DataSets;
+using Cafe365.Melbourne.Domain.Customers;
 
 namespace Cafe365.Melbourne.Infrastructure.Persistence;
 
@@ -9,6 +15,11 @@ public class ApplicationDbContextInitializer
 {
     private readonly ILogger<ApplicationDbContextInitializer> _logger;
     private readonly ApplicationDbContext _dbContext;
+
+    public const int NumProducts = 20;
+    private const int NumCustomers = 20;
+    private const int NumOrders = 20;
+    private const int NumOrderItems = 5;
 
     public ApplicationDbContextInitializer(ILogger<ApplicationDbContextInitializer> logger, ApplicationDbContext dbContext)
     {
@@ -36,25 +47,88 @@ public class ApplicationDbContextInitializer
 
     public async Task SeedAsync()
     {
-        try
-        {
-            if (_dbContext.TodoItems.Any())
-                return;
+        await SeedProductsAsync();
+        await SeedCustomersAsync();
+        await SeedOrdersAsync();
+    }
 
-            _dbContext.TodoItems.Add(TodoItem.Create("Learn Clean Architecture", "Learn how to build a Clean Architecture application", PriorityLevel.High, DateTime.Now.AddDays(1)));
-            _dbContext.TodoItems.Add(TodoItem.Create("Learn Blazor", "Learn how to build a Blazor application", PriorityLevel.High, DateTime.Now.AddDays(2)));
-            _dbContext.TodoItems.Add(TodoItem.Create("Learn ASP.NET Core", "Learn how to build a ASP.NET Core application", PriorityLevel.Medium, DateTime.Now.AddDays(3)));
-            _dbContext.TodoItems.Add(TodoItem.Create("Learn Entity Framework Core", "Learn how to build a Entity Framework Core application", PriorityLevel.Medium, DateTime.Now.AddDays(4)));
-            _dbContext.TodoItems.Add(TodoItem.Create("Learn Docker", "Learn how to build a Docker application", PriorityLevel.Low, DateTime.Now.AddDays(5)));
-            _dbContext.TodoItems.Add(TodoItem.Create("Learn Kubernetes", "Learn how to build a Kubernetes application", PriorityLevel.Low, DateTime.Now.AddDays(6)));
-            _dbContext.TodoItems.Add(TodoItem.Create("Learn Azure", "Learn how to build a Azure application", PriorityLevel.Low, DateTime.Now.AddDays(7)));
+    private async Task SeedProductsAsync()
+    {
+        if (await _dbContext.Products.AnyAsync())
+            return;
 
-            await _dbContext.SaveChangesAsync();
-        }
-        catch (Exception e)
-        {
-            _logger.LogError(e, "An error occurred while seeding the database");
-            throw;
-        }
+        var moneyFaker = new Faker<Money>()
+            .CustomInstantiator(f => new Money(f.Finance.Currency().Code, f.Finance.Amount()));
+
+        var productFaker = new Faker<Product>()
+            .CustomInstantiator(f => new Product
+            {
+                Name = f.Commerce.ProductName(),
+                Price = moneyFaker.Generate(),
+                Sku = f.Commerce.Ean13(),
+                AvailableStock = f.Random.Int(0, 100)
+            });
+
+        var products = productFaker.Generate(NumProducts);
+        _dbContext.Products.AddRange(products);
+        await _dbContext.SaveChangesAsync();
+    }
+
+    private async Task SeedOrdersAsync()
+    {
+        if (await _dbContext.Orders.AnyAsync())
+            return;
+
+        var customerIds = await _dbContext.Customers.Select(c => c.Id).ToListAsync();
+
+        var productIds = await _dbContext.Products.Select(p => p.Id).ToListAsync();
+
+        var moneyFaker = new Faker<Money>()
+            .CustomInstantiator(f => new Money(f.Finance.Currency().Code, f.Finance.Amount()));
+
+        var orderItemFaker = new Faker<OrderItem>()
+            .CustomInstantiator(f => new OrderItem
+            {
+                Price = moneyFaker.Generate(),
+                Quantity = f.Random.Int(0, 5),
+                ProductId = f.PickRandom(productIds)
+            });
+
+        var orderFaker = new Faker<Order>()
+            .CustomInstantiator(f => new Order
+            {
+                CustomerId = f.PickRandom(customerIds),
+                OrderStatus = f.PickRandom<OrderStatus>(),
+                PaidTotal = new Money("AUD", 0),
+                Items = orderItemFaker.Generate(NumOrderItems),
+            });
+
+        var orders = orderFaker.Generate(NumOrders);
+        _dbContext.Orders.AddRange(orders);
+        await _dbContext.SaveChangesAsync();
+    }
+
+    private async Task SeedCustomersAsync()
+    {
+        if (await _dbContext.Customers.AnyAsync())
+            return;
+
+        var customerFaker = new Faker<Customer>()
+            .CustomInstantiator(f => new Customer
+            {
+                FirstName = f.Person.FirstName,
+                LastName = f.Person.LastName,
+                Email = f.Person.Email,
+                Phone = f.Person.Phone,
+                Address = f.Address.StreetAddress(),
+                City = f.Address.City(),
+                State = f.Address.State(),
+                Country = f.Address.Country(),
+                PostCode = f.Address.ZipCode()
+            });
+
+        var customers = customerFaker.Generate(NumCustomers);
+        _dbContext.Customers.AddRange(customers);
+        await _dbContext.SaveChangesAsync();
     }
 }

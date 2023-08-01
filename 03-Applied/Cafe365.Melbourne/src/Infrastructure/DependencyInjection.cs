@@ -5,6 +5,8 @@ using Cafe365.Melbourne.Application.Common.Interfaces;
 using Cafe365.Melbourne.Infrastructure.Persistence;
 using Cafe365.Melbourne.Infrastructure.Persistence.Interceptors;
 using Cafe365.Melbourne.Infrastructure.Services;
+using Cafe365.Melbourne.Infrastructure.Email;
+using Cafe365.Melbourne.Infrastructure.Payments;
 
 namespace Cafe365.Melbourne.Infrastructure;
 
@@ -25,6 +27,9 @@ public static class DependencyInjection
         services.AddScoped<ApplicationDbContextInitializer>();
 
         services.AddSingleton<IDateTime, DateTimeService>();
+
+        services.AddScoped<IPaymentProvider, MockPaymentProvider>();
+        services.AddScoped<IEmailProvider, MockEmailProvider>();
 
         return services;
     }

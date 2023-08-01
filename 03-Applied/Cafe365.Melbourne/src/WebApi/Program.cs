@@ -41,6 +41,7 @@ app.UseRouting();
 app.UseExceptionFilter();
 
 app.MapTodoItemEndpoints();
+app.MapOrderEndpoints();
 
 app.Run();
 

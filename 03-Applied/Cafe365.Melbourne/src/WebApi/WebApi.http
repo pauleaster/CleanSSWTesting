@@ -1,0 +1,24 @@
+﻿@WebApi_HostAddress = https://localhost:7255
+@orderId = 6ACF7F91-3D12-42C9-BEAB-2D3BE4D140F1
+@currency = AUD
+
+### Get Order Details
+
+GET {{WebApi_HostAddress}}/orders/{{orderId}}
+
+### Submit Order
+
+POST {{WebApi_HostAddress}}/orders/{{orderId}}/Submit
+Content-Type: application/json
+
+{
+  "payment": {
+    "cardNumber": "1111-2222-3333-4444",
+    "cardName": "Mr Bob Northwind",
+    "cvv": "123",
+    "expiryMonth": "01",
+    "expiryYear": "2024",
+    "amount": 10,
+    "currency": "{{currency}}"
+  }
+}
