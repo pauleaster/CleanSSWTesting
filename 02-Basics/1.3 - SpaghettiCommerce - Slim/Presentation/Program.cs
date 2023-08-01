@@ -1,7 +1,9 @@
 
+using Application.Features.Products.Abstractions;
+using Application.Features.Products.Services;
+using Infrastructure.Repository;
 using Microsoft.EntityFrameworkCore;
 using SpaghettiCommerce.Data;
-using SpaghettiCommerce.Products;
 
 namespace SpaghettiCommerce
 {
@@ -17,6 +19,7 @@ namespace SpaghettiCommerce
                     builder => builder.MigrationsAssembly(typeof(AppDbContext).Assembly.FullName)));
 
             builder.Services.AddScoped<IProductService, ProductService>();
+            builder.Services.AddScoped<IProductRepository, ProductRepository>();
 
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
