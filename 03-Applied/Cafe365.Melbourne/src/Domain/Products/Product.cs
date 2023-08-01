@@ -1,17 +1,15 @@
 ﻿using Cafe365.Melbourne.Domain.Common.Base;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Cafe365.Melbourne.Domain.Common.ValueObjects;
 
 namespace Cafe365.Melbourne.Domain.Products;
-public class Product : BaseEntity<Guid>
+
+public record ProductId(Guid Value);
+
+public class Product : BaseEntity<ProductId>
 {
     public string Sku { get; set; } = null!;
     public string Name { get; set; } = null!;
-    public decimal Price { get; set; }
-    public string Currency { get; set; } = null!;
+    public Money Price { get; set; }
     public int AvailableStock { get; set; }
     public bool IsStockedItem { get; set; }
 }

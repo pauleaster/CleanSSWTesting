@@ -3,6 +3,9 @@ using Cafe365.Melbourne.Application.Common.Interfaces;
 using Cafe365.Melbourne.Domain.TodoItems;
 using Cafe365.Melbourne.Infrastructure.Persistence.Interceptors;
 using System.Reflection;
+using Cafe365.Melbourne.Domain.Customers;
+using Cafe365.Melbourne.Domain.Orders;
+using Cafe365.Melbourne.Domain.Products;
 
 namespace Cafe365.Melbourne.Infrastructure.Persistence;
 
@@ -22,6 +25,14 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     }
 
     public DbSet<TodoItem> TodoItems => Set<TodoItem>();
+
+    public DbSet<Customer> Customers => Set<Customer>();
+
+    public DbSet<Order> Orders => Set<Order>();
+
+    public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+
+    public DbSet<Product> Products => Set<Product>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -8,7 +8,9 @@ using System.Threading.Tasks;
 
 namespace Cafe365.Melbourne.Domain.Customers;
 
-public class Customer : BaseEntity<Guid>
+public record CustomerId(Guid Value);
+
+public class Customer : BaseEntity<CustomerId>
 {
     public string FirstName { get; set; } = null!;
     public string LastName { get; set; } = null!;

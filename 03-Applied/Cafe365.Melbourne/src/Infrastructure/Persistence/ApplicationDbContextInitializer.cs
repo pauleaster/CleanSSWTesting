@@ -21,7 +21,11 @@ public class ApplicationDbContextInitializer
         try
         {
             if (_dbContext.Database.IsSqlServer())
-                await _dbContext.Database.MigrateAsync();
+            {
+                //await _dbContext.Database.MigrateAsync();
+                await _dbContext.Database.EnsureDeletedAsync();
+                await _dbContext.Database.EnsureCreatedAsync();
+            }
         }
         catch (Exception e)
         {
