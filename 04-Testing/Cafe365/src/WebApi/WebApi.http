@@ -1,0 +1,55 @@
+﻿@host = https://localhost:7255
+@customerId = 8B828485-EEA5-4BC9-8A31-1BB7F60BB907
+@orderId = AF651B92-7D49-4870-A9C1-026221F335C9
+@productId = A070ABEC-2597-470C-9B07-084E649939D0
+@currency = SLL
+
+### Get Customers
+
+GET {{host}}/customers/
+
+### Get Orders
+
+GET {{host}}/orders/
+
+### Create Order
+
+POST {{host}}/orders/
+Content-Type: application/json
+
+{
+  "customerId": "{{customerId}}"
+}
+
+### Get Order Details
+
+GET {{host}}/orders/{{orderId}}
+
+### Add Order Item
+
+POST {{host}}/orders/{{orderId}}/Items
+Content-Type: application/json
+
+{
+  "productId": "{{productId}}",
+  "quantity": 1
+}
+
+### Submit Order
+
+POST {{host}}/orders/{{orderId}}/Submit
+Content-Type: application/json
+
+{
+  "payment": {
+    "cardNumber": "1111-2222-3333-4444",
+    "cardName": "Mr Bob Northwind",
+    "cvv": "123",
+    "expiryMonth": "01",
+    "expiryYear": "2024",
+    "amount": 10,
+    "currency": "{{currency}}"
+  }
+}
+
+###
