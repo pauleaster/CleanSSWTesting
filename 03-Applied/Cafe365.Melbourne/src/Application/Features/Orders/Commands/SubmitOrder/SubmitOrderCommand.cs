@@ -38,10 +38,6 @@ public class SubmitOrderCommandHandler : IRequestHandler<SubmitOrderCommand, Gui
         await ProcessPayment(request, order);
         await AdjustStock(order, cancellationToken);
 
-        order.OrderStatus = OrderStatus.Complete;
-
-        order.AddDomainEvent(new OrderSubmittedEvent(order));
-
         await _dbContext.SaveChangesAsync(cancellationToken);
 
         return order.Id.Value;
@@ -49,21 +45,8 @@ public class SubmitOrderCommandHandler : IRequestHandler<SubmitOrderCommand, Gui
 
     private async Task ProcessPayment(SubmitOrderCommand request, Order order)
     {
-        if (order.Items == null || !order.Items.Any())
-            throw new ValidationException("Cant submit an order without any items");
+        order.AddPayment(new Money(request.Payment.Currency, request.Payment.Amount));
 
-        if (order.OrderStatus is OrderStatus.Complete or OrderStatus.Cancelled)
-            throw new ValidationException("Order status is invalid");
-
-        if (order.PaidTotal.Amount == 0)
-            order.PaidTotal = new Money(request.Payment.Currency, request.Payment.Amount);
-        else
-            order.PaidTotal = new Money(request.Payment.Currency, request.Payment.Amount + order.PaidTotal.Amount);
-
-        if (order.PaidTotal.Amount >= order.PaidTotal.Amount)
-            order.OrderStatus = OrderStatus.Complete;
-
-        var orderTotal = order.Items.Sum(i => i.Price.Amount * i.Quantity);
         var paymentResult = await _paymentProvider.ProcessPayment(request.Payment);
         if (!paymentResult.IsSuccessful)
             throw new PaymentFailedException("Payment was not successful");

@@ -81,26 +81,17 @@ public class ApplicationDbContextInitializer
 
         var customerIds = await _dbContext.Customers.Select(c => c.Id).ToListAsync();
 
-        var productIds = await _dbContext.Products.Select(p => p.Id).ToListAsync();
+        var products = await _dbContext.Products.ToListAsync();
 
         var moneyFaker = new Faker<Money>()
             .CustomInstantiator(f => new Money(f.Finance.Currency().Code, f.Finance.Amount()));
 
-        var orderItemFaker = new Faker<OrderItem>()
-            .CustomInstantiator(f => new OrderItem
-            {
-                Price = moneyFaker.Generate(),
-                Quantity = f.Random.Int(0, 5),
-                ProductId = f.PickRandom(productIds)
-            });
-
         var orderFaker = new Faker<Order>()
-            .CustomInstantiator(f => new Order
+            .CustomInstantiator(f =>
             {
-                CustomerId = f.PickRandom(customerIds),
-                OrderStatus = f.PickRandom<OrderStatus>(),
-                PaidTotal = new Money("AUD", 0),
-                Items = orderItemFaker.Generate(NumOrderItems),
+                var order = Order.Create(f.PickRandom(customerIds));
+                order.AddItem(f.PickRandom(products), f.Random.Int(0, 5));
+                return order;
             });
 
         var orders = orderFaker.Generate(NumOrders);
